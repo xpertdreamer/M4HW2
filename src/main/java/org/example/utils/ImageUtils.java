@@ -1,10 +1,16 @@
 package org.example.utils;
 
+import org.example.commands.AppBotCommand;
+import org.example.functions.FilterOperations;
+import org.example.functions.ImagesOperation;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class ImageUtils {
 
@@ -33,5 +39,25 @@ public class ImageUtils {
             return color.getRGB();
         }
         throw  new Exception("invalide color");
+    }
+
+    public static ImagesOperation getOperation(String operationName) {
+        FilterOperations filterOperations = new FilterOperations();
+        Method[] classMethods = filterOperations.getClass().getDeclaredMethods();
+        for(Method method : classMethods) {
+            if(method.isAnnotationPresent(AppBotCommand.class)) {
+                AppBotCommand command = method.getAnnotation(AppBotCommand.class);
+                if(command.name().equals(operationName)) {
+                    return (f) -> {
+                        try {
+                            return (float[]) method.invoke(filterOperations, f);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException();
+                        }
+                    };
+                }
+            }
+        }
+        return null;
     }
 }
